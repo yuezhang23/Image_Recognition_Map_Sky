@@ -1,0 +1,8 @@
+{
+  "min_width": 640,
+  "min_height": 480,
+  "min_brightness": 60,
+  "max_brightness": 210,
+  "min_sharpness": 120,
+  "min_subject_coverage": 0.18
+}

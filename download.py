@@ -1,4 +1,4 @@
-import json, os, shutil, sys, requests
+import json, os, shutil, requests
 from concurrent.futures import ThreadPoolExecutor
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
@@ -6,10 +6,11 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
 import argparse
 # parse items json directory from command line argument 
 parser = argparse.ArgumentParser()
-parser.add_argument("--items_json", help="Path to the items JSON file")
+parser.add_argument("--items_json", required=True, help="Path to the items JSON file")
+parser.add_argument("--out", default="~/Downloads/delivery task/valid_images", help="Output directory for downloaded images")
 args = parser.parse_args()
 
-OUT = os.path.expanduser(sys.argv[1] if len(sys.argv) > 1 else "~/Downloads/delivery task/valid_images")
+OUT = os.path.expanduser(args.out)
 os.makedirs(OUT, exist_ok=True)
 items = json.load(open(os.path.expanduser(args.items_json), "r", encoding="utf-8"))
 

@@ -34,7 +34,7 @@ pip install requests
 ## Usage
 
 ```bash
-python download.py --items_json images.json
+python download.py --items_json images.json [--out path/to/output]
 ```
 
 The script:
@@ -42,7 +42,7 @@ The script:
 1. Moves any loose images already in the output folder into subfolders named after their tracking number (the part of the filename before the last `_`).
 2. Downloads each photo with 4 parallel workers to `<output>/<key>/<key>_<i>.jpg`, where `<i>` is zero-padded to 4 digits. Photos that already exist are skipped, so you can safely re-run it.
 
-The default output folder is `~/Downloads/delivery task/valid_images`. The script currently treats the first command-line argument as the output folder, so with the command above the images go to a folder named `--items_json`.
+If `--out` is omitted, images go to `~/Downloads/delivery task/valid_images`.
 
 > **Note:** The photo URLs are signed links that expire. Regenerate the items JSON if downloads start failing with `403`.
 

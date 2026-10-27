@@ -3,7 +3,6 @@
 auth.json
 
 # large data folders
---items_json/
 valid_images/
 
 # misc

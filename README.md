@@ -11,7 +11,7 @@ Tools and reference material for reviewing SpeedX POD (Proof of Delivery) photos
 | `image_instructions.png` | The original SpeedX POD standard sheet in English, Spanish and Chinese. |
 | `tracking_address.json` | Maps each tracking number to its delivery address. |
 
-`.gitignore` keeps these out of git: the downloaded images (`valid_images/`, `--items_json/`), credentials (`.env`, `auth.json`), and the items JSON files (`images*.json`), which contain signed photo URLs.
+`.gitignore` keeps these out of git: the downloaded images (`valid_images/`), credentials (`.env`, `auth.json`), and the items JSON files (`images*.json`), which contain signed photo URLs.
 
 ## Items JSON format
 

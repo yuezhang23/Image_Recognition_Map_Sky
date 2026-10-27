@@ -12,3 +12,9 @@ __pycache__/
 
 # signed photo URLs
 images*.json
+
+# pipeline output (contains customer addresses)
+results/
+
+# delivery exports (signed photo URLs)
+delivery_data_*.json

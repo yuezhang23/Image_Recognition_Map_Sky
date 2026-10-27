@@ -1,0 +1,15 @@
+# secrets
+.env
+auth.json
+
+# large data folders
+--items_json/
+valid_images/
+
+# misc
+__pycache__/
+.deepeval/
+.DS_Store
+
+# signed photo URLs
+images*.json

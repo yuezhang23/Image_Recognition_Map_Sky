@@ -17,4 +17,4 @@ images*.json
 results/
 
 # delivery exports (signed photo URLs)
-delivery_data_*.json
+delivery_data*.json

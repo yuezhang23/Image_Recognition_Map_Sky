@@ -12,6 +12,7 @@ DEFAULT_MODELS = {
     "openai": "gpt-5.5",
     # deepseek-v4-pro accepts image input but silently ignores it; deepseek-flash actually sees images
     "deepseek": "deepseek-flash",
+    "qwen": "qwen3.8-omni-flash",
 }
 
 
@@ -82,7 +83,19 @@ class DeepSeekClient(OpenAIClient):
     strict_schema = False
 
 
-VENDORS = {"anthropic": AnthropicClient, "openai": OpenAIClient, "deepseek": DeepSeekClient}
+class QwenClient(OpenAIClient):
+    base_url = "https://us-east-1.maas.qwencloudapi.com/compatible-mode/v1"
+    key_env = "QWEN_API_KEY"
+
+    def extract(self, system, images, schema):
+        data = super().extract(system, images, schema)
+        # the schema is not strictly enforced: the object sometimes comes back wrapped in a one-item list
+        if isinstance(data, list) and len(data) == 1 and isinstance(data[0], dict):
+            return data[0]
+        return data
+
+
+VENDORS = {"anthropic": AnthropicClient, "openai": OpenAIClient, "deepseek": DeepSeekClient, "qwen": QwenClient}
 
 
 def make_client(vendor, model=None):

@@ -1,10 +1,13 @@
 """Render pod_check.py results as a self-contained HTML report.
 
 python visualize.py results/results_openai_gpt-6-luna.jsonl [more results_*.jsonl ...] [--out report.html]
+                    [--zip report.zip]
+
+--zip also writes a shareable zip with the report and the photos it shows, so it opens on another computer.
 
 The first file is the primary run. Every chart is drawn for it; extra files add a model comparison section.
 """
-import argparse, html, json, os, re
+import argparse, html, io, json, os, re, zipfile
 from collections import Counter, defaultdict
 
 import rules
@@ -159,12 +162,13 @@ def tiles(runs):
     n = len(rows)
     v = Counter(r["verdict"] for r in rows)
     best_label, best = max(full_runs(runs), key=lambda run: pass_rate(run[1]))
+    tied = [l for l, rs in full_runs(runs) if pass_rate(rs) == pass_rate(best)]
     rate = f"{100 * pass_rate(best):.0f}%" if best else "–"
-    sub = f'{sum(r["verdict"] == "PASS" for r in best)} of {len(best)} folders · {esc(best_label)}'
+    sub = f'{sum(r["verdict"] == "PASS" for r in best)} of {len(best)} folders · {esc(", ".join(tied))}'
     if len(runs) > 1:
         qualifier = f" that checked at least {(n + 1) // 2} folders" if len(full_runs(runs)) < len(runs) else ""
         sub = f"Best of {len(full_runs(runs))} models{qualifier}: {sub}"
-    if best_label != label:
+    if label not in tied:
         sub += f"<br>This run ({esc(label)}): {100 * pass_rate(rows):.0f}%"
     return (f'<div class="tiles">'
             f'<div class="tile hero"><div class="t-label">Pass rate</div><div class="t-value">{rate}</div>'
@@ -195,7 +199,7 @@ def run_cell(r):
             + (f'<ul class="reasons">{reasons}</ul>' if reasons else "") + "</td>")
 
 
-def folder_table(runs, images_dir, out_dir):
+def folder_table(runs, images_dir, out_dir, photo_ids=None):
     cols = full_runs(runs)
     by_run = [{r["tracking_id"]: r for r in rs} for _, rs in cols]
     body, tally = [], Counter()
@@ -216,6 +220,8 @@ def folder_table(runs, images_dir, out_dir):
             f'<a href="{esc(p)}" target="_blank"><img loading="lazy" src="{esc(p)}" alt="{esc(n)}"></a>'
             for n in r["images"]
             for p in [os.path.relpath(os.path.join(images_dir, t, n), out_dir)])
+        if photo_ids is not None and t not in photo_ids:
+            thumbs = '<span class="muted">photos not included</span>'
         order = (0 if "all" in tags else 1 if "any" in tags else 2, t)
         body.append((order, f'<tr data-tags="{" ".join(tags)}"><td class="mono">{esc(t)}'
                             f'<div class="muted">{esc(r["address"])}</div></td>'
@@ -407,9 +413,11 @@ def section_html(title, sub_html, body):
             f'<p class="sub">{sub_html}</p>{body}</details>')
 
 
-def build(runs, images_dir, out_dir):
+def build(runs, images_dir, out_dir, min_photos=1, excluded=0, photo_ids=None):
     label, rows = runs[0]
     n = len(rows)
+    dropped = (f" · {excluded} folders with fewer than {min_photos} photos left out"
+               if excluded else "")
 
     check_rows = [(name, Counter(r["checks"].get(k, {}).get("status", "REVIEW") for r in rows))
                   for k, name in CHECKS.items()]
@@ -432,13 +440,17 @@ def build(runs, images_dir, out_dir):
 
     parts = [
         f"<h1>POD photo check report</h1><p class='sub'>Run <b>{esc(label)}</b> · {n} folders checked "
-        "against Part A of POD_standard.md</p>",
+        f"against Part A of POD_standard.md{esc(dropped)}</p>",
         guide({k: c for k, (_, c) in zip(CHECKS, check_rows)}),
         tiles(runs),
         section("Verdict", "Overall result per folder. A folder fails if any check fails.",
                 stacked_rows([("All folders", Counter(r["verdict"] for r in rows))], ["PASS", "FAIL", "REVIEW"])),
         section("Outcome by check", "Each Part A requirement on its own. N/A means no special scenario applied.",
                 stacked_rows(check_rows)),
+        section("Folders", "Every folder that failed in at least one model, with each model's verdict, "
+                "check badges and reasons side by side. Hover a badge for that check's reason; "
+                "click a photo to open it.",
+                folder_table(runs, images_dir, out_dir, photo_ids)),
         section("Why folders fail", "Failure reasons grouped by type, with numbers stripped. "
                 "One folder can have several reasons.",
                 single_bars(reasons.most_common(12), labels_above=True)),
@@ -453,10 +465,6 @@ def build(runs, images_dir, out_dir):
     ]
     if len(runs) > 1:
         parts.append(comparison(runs))
-    parts.append(section("Folders", "Every folder that failed in at least one model, with each model's verdict, "
-                         "check badges and reasons side by side. Hover a badge for that check's reason; "
-                         "click a photo to open it.",
-                         folder_table(runs, images_dir, out_dir)))
     return ("<!doctype html><html lang='en'><head><meta charset='utf-8'>"
             "<meta name='viewport' content='width=device-width,initial-scale=1'><title>POD Check Report</title>"
             f"<style>{CSS}</style></head><body><main>{''.join(parts)}</main><div id='tip'></div>"
@@ -468,14 +476,48 @@ def main():
     parser.add_argument("results", nargs="+", help="results_*.jsonl files; the first is the primary run")
     parser.add_argument("--images", default="valid_images", help="Image folder, used for thumbnails")
     parser.add_argument("--out", default="results/report.html")
+    parser.add_argument("--min-photos", type=int, default=3,
+                        help="Leave out folders with fewer photos than this (default 3)")
+    parser.add_argument("--zip", help="Also write a shareable zip with the report and its photos")
+    parser.add_argument("--photo-edge", type=int, default=640, help="Longest photo edge in the zip (default 640)")
+    parser.add_argument("--zip-photos", choices=["all", "failed"], default="all",
+                        help="Put photos of all folders in the zip, or only of folders that failed in any model")
     args = parser.parse_args()
 
     runs = [(run_label(rows, p), rows) for p in args.results for rows in [load(p)]]
+    # folders with too few photos can't meet the standard, so they would only skew the rates
+    excluded = sum(len(r["images"]) < args.min_photos for r in runs[0][1])
+    runs = [(label, [r for r in rows if len(r["images"]) >= args.min_photos]) for label, rows in runs]
     out_dir = os.path.dirname(os.path.abspath(args.out))
     os.makedirs(out_dir, exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
-        f.write(build(runs, os.path.abspath(args.images), out_dir))
+        f.write(build(runs, os.path.abspath(args.images), out_dir, args.min_photos, excluded))
     print("wrote", args.out)
+    if args.zip:
+        write_zip(args.zip, runs, args.images, args.min_photos, excluded, args.photo_edge, args.zip_photos)
+
+
+def write_zip(path, runs, images_dir, min_photos, excluded, edge, which="all"):
+    """Report as report.html with its photos under photos/<tracking_id>/, resized to keep the zip small."""
+    from PIL import Image
+    ids = {r["tracking_id"] for r in runs[0][1]}
+    if which == "failed":
+        # same rows the "Failed" filter shows: not PASS in at least one model
+        ids = {r["tracking_id"] for _, rs in full_runs(runs) for r in rs if r["verdict"] != "PASS"} & ids
+    # build() links photos relative to the output dir, so placing both at the zip root gives photos/<id>/<name>
+    page = build(runs, "/zip/photos", "/zip", min_photos, excluded, None if which == "all" else ids)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("report.html", page)
+        for r in runs[0][1]:
+            if r["tracking_id"] not in ids:
+                continue
+            for name in r["images"]:
+                img = Image.open(os.path.join(images_dir, r["tracking_id"], name)).convert("RGB")
+                img.thumbnail((edge, edge))
+                buf = io.BytesIO()
+                img.save(buf, "JPEG", quality=65, optimize=True)
+                z.writestr(f"photos/{r['tracking_id']}/{name}", buf.getvalue())
+    print(f"wrote {path} ({os.path.getsize(path) / 1e6:.1f} MB) - unzip it and open report.html")
 
 
 if __name__ == "__main__":

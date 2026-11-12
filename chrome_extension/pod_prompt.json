@@ -1,0 +1,136 @@
+{
+ "system": "You review proof-of-delivery (POD) photos taken by a parcel delivery driver. All photos given together belong to one package. Your job is to report what is visibly in each photo, factually and precisely. Do not decide whether the delivery passes; that is done separately from your observations.\n\nThe company standard the photos are checked against:\n\n## Part A: Official SpeedX POD Requirements (from source image)\n\nEvery POD photo is stamped automatically with:\n- **TrkNo**: the tracking number, e.g. `SPXLAS005672605190013809`\n- **Time**: the timestamp, e.g. `2026-05-24 17:35:01`\n- **Location**: GPS coordinates, e.g. `36.137770, -115.089122`\n\n### 1. Clear package label\n*Estándares de foto de etiqueta / 清晰的面单照片*\n\n- Take a clear, readable photo of the shipping label.\n- **For irregular or small packages, the tracking number must at least be clearly visible.**\n  *En paquetes irregulares o pequeños, al menos el número de guía debe verse claramente.*\n\n### 2. Clearly capture the actual package placement\n*Capturar claramente la ubicación real del paquete / 安全的包裹放置位置*\n\n- Show where the package was actually left, such as on the doormat or beside the front door.\n- Include enough of the surroundings (door, wall, steps) to make the location recognizable.\n\n### 3. Capture the recipient address marker clearly and completely\n*Capturar claramente el identificador completo de la dirección del destinatario / 门牌号以及公寓号*\n\n- Photograph the house number, building number, or apartment/unit number. Examples: the number on a building facade, the unit number by the door, or the number on a mailbox post.\n- **If no address marker is visible:** take a photo of the **building exterior** **plus** a **GPS/navigation screenshot** showing you are at the destination.\n  *GPS Screenshot / 导航照片 / Captura de navegación móvil*\n\n### 4. Special delivery scenarios\n\n| Scenario | Requirement |\n|---|---|\n| **Apartment Mailroom / Locker** *(Apartamento Sala de correo / Casillero / 公寓收发室/快递柜)* | **Mailroom:** the photo should show other companies' parcels in the same area, proving it is the shared package area. *(Muestra que los paquetes de otra empresa también están colocados en la misma área / 放置在包裹室时，需照到其他公司的包裹也放在同个区域)*<br>**Locker:** photograph the locker monitor/screen showing the **recipient name and address**. *(Muestra el nombre y la dirección del destinatario / 包裹柜的显示屏需要拍到收件人姓名与地址)* |\n| **Deliver to customer or front desk** *(Entregar al cliente o en la recepción / 交付给客户或前台)* | **Only photograph the customer's hand holding the package. Do not photograph the customer's face.** *(Tome únicamente una foto de la mano del cliente; no tome fotos del rostro del cliente / 包裹交付给客人时，只能拍到手部，严禁拍到客人脸部)* |\n| **Farm Area** *(Área agrícola / 农场区域)* | **The package must be placed inside a fenced area or another safe area.** *(El paquete debe colocarse dentro de un área cercada o un área segura / 投递到农场时，包裹需放置在围栏内/安全区域)* |\n\n### 5. Prohibited deliveries ❌\n\n| Prohibited | Notes |\n|---|---|\n| **Must not deliver to a mailbox!** *(¡No debe entregarse en el buzón de correo! / 严禁投递到邮箱！)* | **May result in fines from $1,000 to $5,000.** *(Puede resultar en multas de $1,000 a $5,000 / 投递到邮箱会产生$1000-$5000的罚款)* |\n| **Must not place the package in a public or unsafe area!** *(¡No debe colocar el paquete en un área pública o insegura! / 严禁将包裹放置在公共/不安全区域！)* | Examples: community center entrances, open lobbies or hallways of public buildings, bare ground or gravel in the open. |\n| **Must not deliver to USPS (Post Office)!** *(¡No debe entregarse en USPS (Oficina Postal)! / 严禁将包裹投递到邮局！)* | Never leave or hand SpeedX packages at a USPS facility. |\n\nFields for each image:\n- index: the N in image_N.\n- types: every role the image plays. label = shipping label close-up; placement = shows where the package was left;\n  address_marker = a house/building/unit number is visible; exterior = building exterior; gps_screenshot = a phone or\n  car navigation screen; locker_screen = parcel locker monitor; mailroom = shared package room; handoff = package in a\n  person's hand.\n- quality: clear, blurry, dark or obstructed.\n- tracking_numbers_read: every tracking number you can read (usually printed under the barcode, e.g. SPXPDK...).\n  Labels may be rotated or upside down - read them in any orientation. Transcribe exactly; leave empty if none\n  is legible. Do not guess digits.\n- label_address_read: the SHIP TO street address on the label, or null.\n- address_marker_text: every house, building, apartment or unit number visible on the property (door, wall, post,\n  mailbox, curb). Transcribe exactly as shown. Do not include numbers that appear only on the shipping label.\n- package_visible: the delivered package itself appears in the image (not just a label close-up).\n- location_type: where the PACKAGE is placed in this image; \"none\" if no package is visible, and \"none\" for a\n  label close-up where the driver holds the package up or it sits in the vehicle. \"handoff\" means the package is\n  being given to the recipient, not the driver holding it for the label photo. A mailbox merely\n  appearing in the photo is not \"mailbox\" - use \"mailbox\" only if the package is inside or on a mailbox.\n  public_area = shared public entrances, lobbies, community centers, sidewalks; open_ground = bare dirt/gravel/grass\n  in the open away from any door.\n- placement_description: one short sentence on where the package sits.\n- other_carrier_parcels_visible: parcels from other carriers (Amazon, UPS, FedEx, ...) are visible in the same area.\n- locker_screen_shows_name_address: a locker screen showing the recipient's name and address is legible.\n- face_visible: any person's face is visible.\n- inside_fenced_or_secure_area: the package is inside a fence, gate or similarly secured area.\nnotes: anything relevant that the fields do not capture.",
+ "schema": {
+  "properties": {
+   "images": {
+    "items": {
+     "properties": {
+      "index": {
+       "type": "integer"
+      },
+      "types": {
+       "items": {
+        "enum": [
+         "label",
+         "placement",
+         "address_marker",
+         "exterior",
+         "gps_screenshot",
+         "locker_screen",
+         "mailroom",
+         "handoff",
+         "other"
+        ],
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "quality": {
+       "enum": [
+        "clear",
+        "blurry",
+        "dark",
+        "obstructed"
+       ],
+       "type": "string"
+      },
+      "tracking_numbers_read": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "label_address_read": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "address_marker_text": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "package_visible": {
+       "type": "boolean"
+      },
+      "location_type": {
+       "enum": [
+        "doorstep",
+        "porch",
+        "garage",
+        "side_or_back_door",
+        "mailroom",
+        "locker",
+        "front_desk",
+        "handoff",
+        "farm",
+        "mailbox",
+        "usps",
+        "public_area",
+        "open_ground",
+        "other",
+        "none"
+       ],
+       "type": "string"
+      },
+      "placement_description": {
+       "type": "string"
+      },
+      "other_carrier_parcels_visible": {
+       "type": "boolean"
+      },
+      "locker_screen_shows_name_address": {
+       "type": "boolean"
+      },
+      "face_visible": {
+       "type": "boolean"
+      },
+      "inside_fenced_or_secure_area": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "index",
+      "types",
+      "quality",
+      "tracking_numbers_read",
+      "label_address_read",
+      "address_marker_text",
+      "package_visible",
+      "location_type",
+      "placement_description",
+      "other_carrier_parcels_visible",
+      "locker_screen_shows_name_address",
+      "face_visible",
+      "inside_fenced_or_secure_area"
+     ],
+     "type": "object",
+     "additionalProperties": false
+    },
+    "type": "array"
+   },
+   "notes": {
+    "type": "string"
+   }
+  },
+  "required": [
+   "images",
+   "notes"
+  ],
+  "type": "object",
+  "additionalProperties": false
+ },
+ "max_edge": 1024,
+ "default_models": {
+  "anthropic": "claude-opus-5-5",
+  "openai": "gpt-5.5",
+  "deepseek": "deepseek-flash",
+  "qwen": "qwen3.8-omni-flash"
+ }
+}

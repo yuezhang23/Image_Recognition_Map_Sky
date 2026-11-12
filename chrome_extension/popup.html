@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <header>
+    <b>POD photo check</b>
+    <a href="#" id="options">Settings</a>
+  </header>
+  <div id="model" class="muted"></div>
+
+  <label>Tracking number
+    <input id="tracking" list="tracking-list" placeholder="SPXPDK…" autocomplete="off">
+    <datalist id="tracking-list"></datalist>
+  </label>
+  <label>Expected address
+    <input id="address" list="address-list" placeholder="600 Skyland Ct, Winder, GA 30680" autocomplete="off">
+    <datalist id="address-list"></datalist>
+  </label>
+  <div id="address-note" class="muted"></div>
+
+  <div class="photos-head"><span>Photos on this page</span><span class="muted" id="photo-count"></span></div>
+  <div id="photos" class="grid"></div>
+
+  <button id="check" class="primary">Check photos</button>
+  <div id="result"></div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

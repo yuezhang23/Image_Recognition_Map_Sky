@@ -7,6 +7,7 @@ Tools and reference material for reviewing SpeedX POD (Proof of Delivery) photos
 | File | Description |
 |---|---|
 | `download.py` | Downloads POD photos from an items JSON file into one folder per tracking number. |
+| `import_delivery_data.py` | Merges a `delivery_data` export (addresses + photo URLs) into `tracking_address.json` and `valid_images/`, skipping duplicates. |
 | `POD_standard.md` | The SpeedX POD photo rules (Part A, transcribed from `image_instructions.png`) plus extra guidance for drivers (Part B). |
 | `image_instructions.png` | The original SpeedX POD standard sheet in English, Spanish and Chinese. |
 | `tracking_address.json` | Maps each tracking number to its delivery address. |
@@ -14,8 +15,9 @@ Tools and reference material for reviewing SpeedX POD (Proof of Delivery) photos
 | `llm_vendors.py` | Vision LLM clients for Anthropic, OpenAI and DeepSeek. |
 | `visualize.py` | Builds an HTML report from one or more `results_*.jsonl` files. |
 | `rules.py` | The rules that turn the LLM's observations into a verdict. `test_rules.py` tests them. |
+| `chrome_extension/` | Chrome extension that runs the same check on the photos of the page you are viewing. See `chrome_extension/README.md`. |
 
-`.gitignore` keeps these out of git: the downloaded images (`valid_images/`), credentials (`.env`, `auth.json`), and the items JSON files (`images*.json`), which contain signed photo URLs.
+`.gitignore` keeps these out of git: the downloaded images (`valid_images/`), credentials (`.env`, `auth.json`), and the items and delivery-data JSON files (`images*.json`, `delivery_data*.json`), which contain signed photo URLs.
 
 ## Items JSON format
 
@@ -49,6 +51,20 @@ The script:
 If `--out` is omitted, images go to `~/Downloads/delivery task/valid_images`.
 
 > **Note:** The photo URLs are signed links that expire. Regenerate the items JSON if downloads start failing with `403`.
+
+## Importing a delivery_data export
+
+Newer exports map each tracking number to its address and photo URLs:
+
+```json
+{"SPXPDK013662610190054468": {"address": "600 Skyland Ct, Winder, GA 30680", "images": ["https://...jpg?sv=...", "..."]}}
+```
+
+```bash
+python import_delivery_data.py "delivery_data (1).json"
+```
+
+New addresses are added to `tracking_address.json`; an existing address is never overwritten (a mismatch is printed). A photo URL listed twice for the same tracking number is downloaded once, and a file identical to one already in the folder is dropped, so re-running is safe. A photo shared by several tracking numbers (packages left together) is kept in each folder.
 
 ## Output layout
 
@@ -116,8 +132,10 @@ Both files are rewritten on every run and contain only the folders checked in th
 ### Report
 
 ```bash
-python visualize.py results/results_openai_gpt-6-luna.jsonl [other results_*.jsonl ...] [--out results/report.html]
+python visualize.py results/results_openai_gpt-6-luna.jsonl [other results_*.jsonl ...] [--out results/report.html] [--min-photos 3]
 ```
+
+Folders with fewer than `--min-photos` photos (default 3) are left out of every chart and rate, because one or two photos can't show the label, the placement and the address marker together. Pass `--min-photos 1` to include every folder.
 
 The script writes one self-contained HTML page with light and dark themes. Click a panel's title to collapse or expand it. The first file is the main run, and every chart is drawn for it:
 

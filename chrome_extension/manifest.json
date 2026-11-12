@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "POD photo check",
+  "version": "0.1.0",
+  "description": "Checks SpeedX proof-of-delivery photos on the current page against Part A of the POD standard.",
+  "action": { "default_title": "Check POD photos", "default_popup": "popup.html" },
+  "options_page": "options.html",
+  "background": { "service_worker": "background.js", "type": "module" },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://spxblob.blob.core.windows.net/*",
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://us-east-1.maas.qwencloudapi.com/*"
+  ],
+  "optional_host_permissions": ["https://*/*", "http://*/*"]
+}

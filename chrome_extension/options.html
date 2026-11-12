@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>POD photo check – settings</title>
+<link rel="stylesheet" href="ui.css">
+</head>
+<body class="options">
+  <h2>POD photo check – settings</h2>
+
+  <fieldset>
+    <legend>Model</legend>
+    <label>Vendor <select id="vendor"></select></label>
+    <label>Model <input id="model" autocomplete="off"></label>
+    <div class="muted">Leave empty to use the default. Avoid deepseek-v4-pro: it accepts images but ignores them.</div>
+  </fieldset>
+
+  <fieldset>
+    <legend>API keys</legend>
+    <div class="muted">Stored only in this browser profile (chrome.storage.local) and sent only to that vendor's API.</div>
+    <div id="keys"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Expected addresses</legend>
+    <div class="muted">Optional. Import tracking_address.json to fill in the address for a known tracking number.</div>
+    <label>tracking_address.json <input type="file" id="book" accept=".json,application/json"></label>
+    <div id="book-status" class="muted"></div>
+  </fieldset>
+
+  <button id="save" class="primary">Save</button>
+  <div id="saved" class="ok"></div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
